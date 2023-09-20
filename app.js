@@ -1,4 +1,5 @@
 const express = require("express");
+const path = require("path");
 const logger = require("morgan");
 const cors = require("cors");
 const mongoose = require("mongoose");
@@ -13,6 +14,9 @@ const formatsLogger = app.get("env") === "development" ? "dev" : "short";
 app.use(logger(formatsLogger));
 app.use(cors());
 app.use(express.json());
+
+// Konfiguracja dostępu do plików statycznych z folderu public
+app.use(express.static("public"));
 
 const dbUrl =
   "mongodb+srv://agnieszkaiwan:zz4sRuRHDKCpYYVM@cluster0.squxa5s.mongodb.net/db-contacts";
