@@ -1,3 +1,4 @@
+const gravatar = require("gravatar");
 const bcrypt = require("bcryptjs");
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
@@ -13,6 +14,10 @@ if (!process.env.JWT_SECRET) {
 async function signup(req, res) {
   try {
     const { email, password } = req.body;
+
+    // Generowanie URL awatara
+
+    const avatarURL = gravatar.url(email, { s: "250", d: "identicon" }); // Wymiary: 250x250, domyślny identicon
 
     // Sprawdź, czy użytkownik o podanym adresie email już istnieje
     const existingUser = await User.findOne({ email });
@@ -61,7 +66,7 @@ async function login(req, res) {
 
     // Wygeneruj token JWT
     const token = jwt.sign({ userId: user._id }, jwtSecret, {
-      expiresIn: "5min",
+      expiresIn: "1h",
     });
 
     res.status(200).json({
