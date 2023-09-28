@@ -66,6 +66,9 @@ async function login(req, res) {
     if (!user) {
       return res.status(401).json({ message: "Email or password is wrong" });
     }
+    if (!user.verify) {
+      return res.status(401).json({ message: "Email not verified" });
+    }
 
     // Porównaj hasło z haszem w bazie danych
     const passwordMatch = await bcrypt.compare(password, user.password);
