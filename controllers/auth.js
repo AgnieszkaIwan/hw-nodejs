@@ -3,7 +3,9 @@ const bcrypt = require("bcryptjs");
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
 const User = require("../models/users");
+const { sendVerificationEmail } = require("../email/mailer");
 const jwtSecret = process.env.JWT_SECRET;
+const { v4: uuidv4 } = require("uuid");
 
 if (!process.env.JWT_SECRET) {
   console.error("Brak wartości dla JWT_SECRET");
@@ -25,12 +27,22 @@ async function signup(req, res) {
       return res.status(409).json({ message: "Email in use" });
     }
 
+    // Generuj token weryfikacyjny
+    const verificationToken = uuidv4();
+
     // Haszuj hasło przed zapisaniem go w bazie danych
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Utwórz nowego użytkownika w bazie danych
-    const newUser = new User({ email, password: hashedPassword });
+    const newUser = new User({
+      email,
+      password: hashedPassword,
+      verificationToken,
+    });
     await newUser.save();
+
+    // Wyślij e-mail weryfikacyjny
+    sendVerificationEmail(newUser.email, newUser.verificationToken);
 
     // Usuń pole z tokenem z odpowiedzi
     delete newUser.token;
@@ -53,6 +65,9 @@ async function login(req, res) {
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(401).json({ message: "Email or password is wrong" });
+    }
+    if (!user.verify) {
+      return res.status(401).json({ message: "Email not verified" });
     }
 
     // Porównaj hasło z haszem w bazie danych
